@@ -11,7 +11,10 @@ EXAMPLE_EP = Path("episodes/s01e01_map_forgot_roads/episode.yaml")
 def test_build_runs_all_stages_in_order():
     result = build_final(EXAMPLE_EP, dry_run=True)
     assert result.success is True
-    expected = ["validate", "plan", "generate", "timeline", "render_frames", "assemble_video"]
+    expected = [
+        "validate", "plan", "generate", "timeline", "render_frames",
+        "audio_mix", "assemble_video", "qc_check", "provenance_bundle"
+    ]
     assert result.stages_completed == expected
 
 
@@ -39,7 +42,7 @@ def test_dry_run_shows_stages_without_executing():
     result = build_final(EXAMPLE_EP, dry_run=True)
     assert result.success is True
     assert len(result.stage_results) == 0
-    assert len(result.stages_completed) == 6
+    assert len(result.stages_completed) == 9
 
 
 def test_force_flag_passed_to_generate():
@@ -47,12 +50,18 @@ def test_force_flag_passed_to_generate():
          patch("wayfinders_cli.build.build_plan") as mock_plan, \
          patch("wayfinders_cli.build.generate_episode_assets") as mock_gen, \
          patch("wayfinders_cli.build.write_timeline") as mock_timeline, \
-         patch("wayfinders_cli.build.ffmpeg_exists", return_value=False):
+         patch("wayfinders_cli.build.ffmpeg_exists", return_value=False), \
+         patch("wayfinders_cli.build.create_provenance_bundle") as mock_prov, \
+         patch("wayfinders_cli.build.QCChecker") as mock_qc:
 
         mock_val.return_value = ValidationResult(ok=True, errors=[], missing_files=[])
         mock_plan.return_value = {}
         mock_gen.return_value = MagicMock(generated=[], skipped=[], errors=[])
         mock_timeline.return_value = Path("logs/timeline.json")
+        mock_prov.return_value = Path("logs/provenance.zip")
+        mock_qc_instance = MagicMock()
+        mock_qc_instance.run.return_value = MagicMock(passed=True, errors=[], warnings=[])
+        mock_qc.return_value = mock_qc_instance
 
         build_final(EXAMPLE_EP, force=True)
         mock_gen.assert_called_once()

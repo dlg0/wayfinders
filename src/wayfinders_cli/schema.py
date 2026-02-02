@@ -58,9 +58,17 @@ class OverlayRef(BaseModel):
     text: Optional[str] = None
 
 
+class AudioLevels(BaseModel):
+    dialogue: float = Field(default=1.0, ge=0.0, le=1.0)
+    sfx: float = Field(default=0.8, ge=0.0, le=1.0)
+    music: float = Field(default=0.3, ge=0.0, le=1.0)
+
+
 class AudioRef(BaseModel):
     dialogue: list[str] = Field(default_factory=list)
     sfx: list[str] = Field(default_factory=list)
+    music_bed: Optional[str] = None
+    levels: Optional[AudioLevels] = None
 
 
 class Shot(BaseModel):

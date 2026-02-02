@@ -1,5 +1,8 @@
 # Wayfinders (show pipeline repo scaffold)
 
+[![CI](https://github.com/dlg0/wayfinders/actions/workflows/ci.yml/badge.svg)](https://github.com/dlg0/wayfinders/actions/workflows/ci.yml)
+[![Installation](https://img.shields.io/badge/docs-INSTALL.md-blue)](docs/INSTALL.md)
+
 This repository is a **developer handoff scaffold** for a complete production tool to create a
 stylized, low-frame kids adventure series using **rigged cutouts** (Option B).
 

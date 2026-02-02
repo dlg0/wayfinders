@@ -17,6 +17,9 @@ from .render.timeline import write_timeline, export_timeline_jsonschema
 from .gen.generate import generate_episode_assets
 from .scaffolding import render_episode_scaffold
 from .build import build_final as do_build_final
+from .qc.checker import QCChecker
+from .qc.report import generate_qc_report, generate_cost_report
+from .provenance.bundle import create_provenance_bundle
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -113,12 +116,13 @@ def build_final_cmd(
     episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False),
     force: bool = typer.Option(False, "--force", help="Force regenerate all assets"),
     skip_validation: bool = typer.Option(False, "--skip-validation", help="Skip validation stage"),
+    skip_qc: bool = typer.Option(False, "--skip-qc", help="Skip QC check stage"),
     dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done"),
 ):
-    """Run the full build pipeline: validate → generate → timeline → render → assemble."""
+    """Run the full build pipeline: validate → generate → timeline → render → assemble → qc."""
     if dry_run:
         console.print("[bold cyan]Dry run mode[/bold cyan] - showing planned stages:")
-        result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation, dry_run=True)
+        result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation, skip_qc=skip_qc, dry_run=True)
         for stage in result.stages_completed:
             console.print(f"  → {stage}")
         for w in result.warnings:
@@ -126,7 +130,7 @@ def build_final_cmd(
         raise typer.Exit(code=0)
 
     console.print(f"[bold]Building[/bold] {episode_yaml}")
-    result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation)
+    result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation, skip_qc=skip_qc)
 
     for sr in result.stage_results:
         status = "[green]✓[/green]" if sr.success else "[red]✗[/red]"
@@ -207,6 +211,51 @@ def gen_assets(
         raise typer.Exit(code=1)
 
 
+@app.command("qc")
+def qc_cmd(
+    episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False),
+    report_only: bool = typer.Option(False, "--report-only", help="Generate reports without gating"),
+):
+    """Run QC checks on an episode."""
+    import yaml
+
+    checker = QCChecker()
+    qc_result = checker.run(episode_yaml)
+
+    ep_data = yaml.safe_load(episode_yaml.read_text(encoding="utf-8"))
+    episode_id = ep_data.get("id", "unknown")
+    logs_dir = episode_yaml.parent / "logs"
+
+    json_path, md_path = generate_qc_report(qc_result, logs_dir, episode_id)
+    cost_json, cost_md = generate_cost_report(logs_dir, logs_dir)
+
+    console.print(f"[bold]QC Report:[/bold] {json_path}")
+    console.print(f"[bold]Cost Report:[/bold] {cost_json}")
+
+    status = "[green]PASSED[/green]" if qc_result.passed else "[red]FAILED[/red]"
+    console.print(f"\n[bold]Status:[/bold] {status}")
+
+    if qc_result.errors:
+        console.print("\n[bold red]Errors:[/bold red]")
+        for e in qc_result.errors:
+            console.print(f"  - {e}")
+
+    if qc_result.warnings:
+        console.print(f"\n[bold yellow]Warnings ({len(qc_result.warnings)}):[/bold yellow]")
+        for w in qc_result.warnings[:10]:
+            console.print(f"  - {w}")
+        if len(qc_result.warnings) > 10:
+            console.print(f"  ... and {len(qc_result.warnings) - 10} more")
+
+    if report_only:
+        raise typer.Exit(code=0)
+
+    if not qc_result.passed:
+        raise typer.Exit(code=1)
+
+    raise typer.Exit(code=0)
+
+
 canon_app = typer.Typer(add_completion=False, no_args_is_help=True)
 app.add_typer(canon_app, name="canon")
 
@@ -230,6 +279,25 @@ def export_timeline_schema(out_dir: Path = typer.Option(Path("docs/jsonschema"),
     out_path = out_dir / "timeline.schema.json"
     export_timeline_jsonschema(out_path)
     console.print(f"Wrote {out_path}")
+
+
+@app.command("bundle")
+def bundle_cmd(
+    episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False),
+    include_prompts: Optional[Path] = typer.Option(
+        None, "--include-prompts", help="Include source prompts directory"
+    ),
+    output: Optional[Path] = typer.Option(
+        None, "--output", "-o", help="Output path for bundle zip"
+    ),
+):
+    """Create a provenance bundle for an episode."""
+    bundle_path = create_provenance_bundle(
+        episode_yaml,
+        output_path=output,
+        include_prompts_dir=include_prompts,
+    )
+    console.print(f"[bold green]Created[/bold green] {bundle_path}")
 
 
 if __name__ == "__main__":

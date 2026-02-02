@@ -12,6 +12,11 @@ from .gen.generate import generate_episode_assets
 from .render.timeline import write_timeline
 from .render.animatic_stub import build_animatic_from_placeholders
 from .render.ffmpeg import ffmpeg_exists
+from .qc.checker import QCChecker
+from .qc.report import generate_qc_report, generate_cost_report
+from .render.audio import mix_episode_audio
+from .reproducibility import set_random_seed
+from .provenance.bundle import create_provenance_bundle
 
 
 @dataclass
@@ -54,12 +59,17 @@ def build_final(
     episode_yaml: Path,
     force: bool = False,
     skip_validation: bool = False,
+    skip_qc: bool = False,
     dry_run: bool = False,
+    seed: Optional[int] = None,
 ) -> BuildResult:
     result = BuildResult(success=False)
     episode_dir = episode_yaml.parent
     logs_dir = episode_dir / "logs"
     logs_dir.mkdir(parents=True, exist_ok=True)
+
+    if seed is not None:
+        set_random_seed(seed)
 
     stages = [
         ("validate", not skip_validation),
@@ -67,7 +77,10 @@ def build_final(
         ("generate", True),
         ("timeline", True),
         ("render_frames", True),
+        ("audio_mix", True),
         ("assemble_video", True),
+        ("qc_check", not skip_qc),
+        ("provenance_bundle", True),
     ]
 
     if dry_run:
@@ -119,6 +132,29 @@ def build_final(
             return True, "skipped (Pillow not available)"
         return True, "compositor not implemented, skipping"
 
+    audio_mix_path: Optional[Path] = None
+
+    def stage_audio_mix():
+        nonlocal audio_mix_path
+        if not ffmpeg_exists():
+            result.warnings.append("audio_mix: ffmpeg not available, skipping")
+            return True, "skipped (ffmpeg not available)"
+
+        mix_result = mix_episode_audio(episode_yaml)
+        if not mix_result.success:
+            if "no audio tracks" in mix_result.message:
+                result.warnings.append(f"audio_mix: {mix_result.message}")
+                return True, mix_result.message
+            return False, mix_result.message
+
+        if mix_result.tracks_missing:
+            result.warnings.append(
+                f"audio_mix: {len(mix_result.tracks_missing)} missing audio assets"
+            )
+
+        audio_mix_path = mix_result.output_path
+        return True, mix_result.message
+
     def stage_assemble_video():
         if not ffmpeg_exists():
             result.warnings.append("assemble_video: ffmpeg not available, skipping")
@@ -131,13 +167,43 @@ def build_final(
         except Exception as e:
             return False, str(e)
 
+    def stage_provenance_bundle():
+        try:
+            bundle_path = create_provenance_bundle(episode_yaml)
+            return True, f"bundle written to {bundle_path}"
+        except Exception as e:
+            return False, str(e)
+
+    def stage_qc_check():
+        import yaml
+        checker = QCChecker()
+        qc_result = checker.run(episode_yaml)
+
+        ep_data = yaml.safe_load(episode_yaml.read_text(encoding="utf-8"))
+        episode_id = ep_data.get("id", "unknown")
+
+        generate_qc_report(qc_result, logs_dir, episode_id)
+        generate_cost_report(logs_dir, logs_dir)
+
+        if not qc_result.passed:
+            err_summary = "; ".join(qc_result.errors[:3])
+            if len(qc_result.errors) > 3:
+                err_summary += f" (+{len(qc_result.errors) - 3} more)"
+            return False, f"QC failed: {err_summary}"
+
+        warn_count = len(qc_result.warnings)
+        return True, f"QC passed ({warn_count} warnings)"
+
     stage_funcs = {
         "validate": stage_validate,
         "plan": stage_plan,
         "generate": stage_generate,
         "timeline": stage_timeline,
         "render_frames": stage_render_frames,
+        "audio_mix": stage_audio_mix,
         "assemble_video": stage_assemble_video,
+        "qc_check": stage_qc_check,
+        "provenance_bundle": stage_provenance_bundle,
     }
 
     for stage_name, enabled in stages:
@@ -152,7 +218,6 @@ def build_final(
 
     result.success = True
     _write_build_log(result, logs_dir)
-    _write_provenance_bundle(result, episode_yaml, logs_dir)
     return result
 
 
@@ -186,26 +251,3 @@ def _write_build_log(result: BuildResult, logs_dir: Path) -> Path:
 
     log_path.write_text("\n".join(lines), encoding="utf-8")
     return log_path
-
-
-def _write_provenance_bundle(result: BuildResult, episode_yaml: Path, logs_dir: Path) -> Path:
-    episode_dir = episode_yaml.parent
-    provenance_path = logs_dir / "provenance.json"
-
-    sidecars = []
-    assets_dir = episode_dir / "assets"
-    for sidecar_path in assets_dir.rglob("*.json"):
-        try:
-            data = json.loads(sidecar_path.read_text(encoding="utf-8"))
-            sidecars.append(data)
-        except (json.JSONDecodeError, OSError):
-            pass
-
-    bundle = {
-        "success": result.success,
-        "stages_completed": result.stages_completed,
-        "output_path": str(result.output_path) if result.output_path else None,
-        "assets": sidecars,
-    }
-    provenance_path.write_text(json.dumps(bundle, indent=2), encoding="utf-8")
-    return provenance_path

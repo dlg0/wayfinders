@@ -1,35 +1,184 @@
 version: 1
 shots:
+  # === ACT 1: SETUP ===
   - id: S01
-    dur_sec: 5
-    bg: bg_windglass_ridge_day
-    camera: { move: pan, x0: 0.0, x1: 0.08, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.02 }
+    dur_sec: 4
+    bg: bg_windglass_plains_wide
+    camera: { move: pan, x0: 0.0, x1: 0.1, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.02 }
     actors: []
-    overlays: []
+    overlays:
+      - { id: title_card, text: "The Map That Forgot Roads" }
     fx: []
-    audio: { dialogue: [], sfx: ["wind_soft"] }
+    audio: { dialogue: [], sfx: ["wind_soft", "music_bed_intro"] }
 
   - id: S02
     dur_sec: 5
     bg: bg_windglass_ridge_day
+    camera: { move: slowpush, z0: 1.0, z1: 1.05 }
+    actors:
+      - { character: charlie, pose: stand_think, expression: calm }
+      - { character: spencer, pose: crouch_ready, expression: excited }
+      - { character: fletcher, pose: stand_observe, expression: curious }
+    overlays: []
+    fx: []
+    audio: { dialogue: ["Charlie: Fold says the crossroads should be just ahead."], sfx: ["footsteps_grass"] }
+
+  - id: S03
+    dur_sec: 4
+    bg: bg_windglass_ridge_day
     camera: { move: none }
+    actors:
+      - { character: fold, pose: float_idle, expression: worried }
+    overlays:
+      - { id: fold_map }
+    fx: [path_flicker]
+    audio: { dialogue: ["Fold: The lines... they're fading. I can't remember where the road goes."], sfx: ["paper_rustle"] }
+
+  - id: S04
+    dur_sec: 3
+    bg: bg_windglass_ridge_day
+    camera: { move: none }
+    actors:
+      - { character: spencer, pose: jump_point, expression: eager }
+    overlays: []
+    fx: []
+    audio: { dialogue: ["Spencer: Shortcut! I'll find one!"], sfx: ["whoosh_quick"] }
+
+  # === ACT 2: RISING ACTION ===
+  - id: S05
+    dur_sec: 5
+    bg: bg_tall_grass_mid
+    camera: { move: shake, strength: 0.02 }
     actors:
       - { character: spencer, pose: run_loop, expression: excited }
     overlays: []
     fx: []
-    audio: { dialogue: ["Spencer: Shortcut!"], sfx: ["footsteps_grass"] }
+    audio: { dialogue: [], sfx: ["footsteps_fast", "grass_rustle"] }
 
-  - id: S16
-    dur_sec: 10
+  - id: S06
+    dur_sec: 4
     bg: bg_tall_grass_mid
-    camera: { move: slowpush, z0: 1.0, z1: 1.05 }
+    camera: { move: none }
+    actors:
+      - { character: spencer, pose: stand_confused, expression: worried }
+    overlays: []
+    fx: [path_flicker]
+    audio: { dialogue: ["Spencer: Wait... I was just here. The grass moved!"], sfx: ["wind_whisper"] }
+
+  - id: S07
+    dur_sec: 5
+    bg: bg_windglass_clearing
+    camera: { move: slowpush, z0: 1.0, z1: 1.03 }
+    actors:
+      - { character: charlie, pose: kneel_examine, expression: focused }
+      - { character: fletcher, pose: stand_observe, expression: thoughtful }
+    overlays: []
+    fx: []
+    audio: { dialogue: ["Charlie: The old path markers are here, but they're blank."], sfx: ["stone_tap"] }
+
+  - id: S08
+    dur_sec: 4
+    bg: bg_windglass_clearing
+    camera: { move: none }
+    actors:
+      - { character: fletcher, pose: kneel_touch, expression: calm }
+    overlays: []
+    fx: [glow]
+    audio: { dialogue: ["Fletcher: Someone named these paths once. Names have power."], sfx: ["hum_soft"] }
+
+  - id: S09
+    dur_sec: 3
+    bg: bg_windglass_clearing
+    camera: { move: none }
+    actors:
+      - { character: fold, pose: float_sad, expression: sad }
+    overlays:
+      - { id: fold_map }
+    fx: [paper_tear]
+    audio: { dialogue: ["Fold: When names are forgotten, I forget too."], sfx: ["paper_tear_soft"] }
+
+  # === ACT 3: CLIMAX ===
+  - id: S10
+    dur_sec: 5
+    bg: bg_windglass_crossroads
+    camera: { move: pan, x0: -0.05, x1: 0.05, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.0 }
+    actors:
+      - { character: charlie, pose: stand_lead, expression: determined }
+      - { character: spencer, pose: stand_ready, expression: focused }
+      - { character: fletcher, pose: stand_observe, expression: calm }
+    overlays: []
+    fx: []
+    audio: { dialogue: ["Charlie: We need to name the path ourselves. And promise to remember it."], sfx: ["wind_build"] }
+
+  - id: S11
+    dur_sec: 6
+    bg: bg_windglass_crossroads
+    camera: { move: slowpush, z0: 1.0, z1: 1.08 }
     actors:
       - { character: fletcher, pose: kneel_point, expression: calm }
     overlays: []
     fx: [path_draw, glow]
-    audio: { dialogue: ["Fletcher: The Gentle Way."], sfx: ["ink_draw", "chime_soft"] }
+    audio: { dialogue: ["Fletcher: The Gentle Way. I name you, and I promise to keep you."], sfx: ["ink_draw", "chime_soft"] }
 
-  - id: S59
+  - id: S12
+    dur_sec: 4
+    bg: bg_windglass_crossroads
+    camera: { move: none }
+    actors:
+      - { character: spencer, pose: crouch_touch, expression: earnest }
+    overlays: []
+    fx: [path_draw, glow]
+    audio: { dialogue: ["Spencer: The Quick Run! I'll remember you!"], sfx: ["ink_draw", "chime_bright"] }
+
+  - id: S13
+    dur_sec: 4
+    bg: bg_windglass_crossroads
+    camera: { move: none }
+    actors:
+      - { character: charlie, pose: kneel_write, expression: calm }
+    overlays: []
+    fx: [path_draw, glow]
+    audio: { dialogue: ["Charlie: The Steady Road. I give you my word."], sfx: ["ink_draw", "chime_deep"] }
+
+  # === ACT 4: RESOLUTION ===
+  - id: S14
+    dur_sec: 5
+    bg: bg_windglass_crossroads
+    camera: { move: slowpush, z0: 1.0, z1: 1.05 }
+    actors:
+      - { character: fold, pose: float_happy, expression: joyful }
+    overlays:
+      - { id: fold_map }
+    fx: [glow]
+    audio: { dialogue: ["Fold: I remember! Three paths, three promises!"], sfx: ["magic_restore", "paper_unfold"] }
+
+  - id: S15
+    dur_sec: 4
+    bg: bg_windglass_crossroads
+    camera: { move: pan, x0: 0.0, x1: 0.05, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.0 }
+    actors:
+      - { character: charlie, pose: stand_smile, expression: happy }
+      - { character: spencer, pose: jump_cheer, expression: excited }
+      - { character: fletcher, pose: stand_nod, expression: content }
+      - { character: fold, pose: float_happy, expression: joyful }
+    overlays: []
+    fx: []
+    audio: { dialogue: [], sfx: ["music_bed_resolve", "wind_gentle"] }
+
+  - id: S16
+    dur_sec: 4
+    bg: bg_windglass_path_sunset
+    camera: { move: pan, x0: 0.0, x1: 0.08, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.02 }
+    actors:
+      - { character: charlie, pose: walk_lead, expression: calm }
+      - { character: spencer, pose: walk_bounce, expression: happy }
+      - { character: fletcher, pose: walk_steady, expression: content }
+    overlays:
+      - { id: rule_tag, text: "Name the path. Promise to keep it." }
+    fx: []
+    audio: { dialogue: ["Fletcher: Names and promises. They shape the world."], sfx: ["footsteps_path", "music_bed_outro"] }
+
+  - id: S17
     dur_sec: 6
     bg: bg_endcard_paper
     camera: { move: none }
