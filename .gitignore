@@ -8,6 +8,7 @@ dist/
 build/
 *.egg-info/
 .DS_Store
+wf.toml
 
 episodes/**/assets/**/*
 episodes/**/renders/**/*

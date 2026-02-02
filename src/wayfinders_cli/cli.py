@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from typing import Optional
 
 import typer
 from rich.console import Console
@@ -13,6 +14,9 @@ from .plan import build_plan
 from .schema import Episode
 from .render.animatic_stub import build_animatic_from_placeholders
 from .render.timeline import write_timeline, export_timeline_jsonschema
+from .gen.generate import generate_episode_assets
+from .scaffolding import render_episode_scaffold
+from .build import build_final as do_build_final
 
 app = typer.Typer(add_completion=False, no_args_is_help=True)
 console = Console()
@@ -67,48 +71,85 @@ def new_episode(
     title: str = typer.Option(..., "--title"),
     biome: str = typer.Option("windglass_plains", "--biome"),
     runtime_target_sec: int = typer.Option(780, "--runtime"),
+    template_dir: Path = typer.Option(None, "--template", help="Custom template directory"),
+    force: bool = typer.Option(False, "--force", help="Overwrite existing episode"),
 ):
     slug = "".join(ch.lower() if ch.isalnum() else "_" for ch in title).strip("_")
     slug = "_".join([s for s in slug.split("_") if s])[:64]
     ep_id = f"s{season:02d}e{episode:02d}"
     ep_dir = Path("episodes") / f"{ep_id}_{slug}"
-    if ep_dir.exists():
+    cast = ["charlie", "spencer", "fletcher", "fold"]
+
+    try:
+        result = render_episode_scaffold(
+            ep_dir=ep_dir,
+            ep_id=ep_id,
+            title=title,
+            biome=biome,
+            runtime_target_sec=runtime_target_sec,
+            cast=cast,
+            template_dir=template_dir,
+            force=force,
+        )
+    except FileExistsError as e:
         console.print(f"[bold red]Episode already exists:[/bold red] {ep_dir}")
-        raise typer.Exit(code=2)
+        console.print("Use --force to overwrite.")
+        raise typer.Exit(code=2) from e
 
-    (ep_dir / "assets").mkdir(parents=True, exist_ok=True)
-    (ep_dir / "renders").mkdir(parents=True, exist_ok=True)
-    (ep_dir / "logs").mkdir(parents=True, exist_ok=True)
-    (ep_dir / "assets" / ".keep").write_text("", encoding="utf-8")
-    (ep_dir / "renders" / ".keep").write_text("", encoding="utf-8")
-    (ep_dir / "logs" / ".keep").write_text("", encoding="utf-8")
+    console.print(f"[bold green]Created[/bold green] {result.ep_dir}")
+    console.print(f"Files: {', '.join(result.files_created)}")
 
-    (ep_dir / "episode.yaml").write_text(
-        (
-            f'id: "{ep_id}"\n'
-            f'title: "{title}"\n'
-            f"runtime_target_sec: {runtime_target_sec}\n"
-            f'biome: "{biome}"\n'
-            "cast: [charlie, spencer, fletcher, fold]\n"
-            'style_profile: "comic_low_fps_v1"\n'
-            "render:\n  fps: 24\n  resolution: [1920, 1080]\n"
-            "assets:\n"
-            "  pose_packs:\n"
-            "    - posepack_charlie_v1\n"
-            "    - posepack_spencer_v1\n"
-            "    - posepack_fletcher_v1\n"
-            "    - posepack_fold_v1\n"
-            f'  bg_pack: "{biome}_v1"\n'
-            '  overlay_pack: "overlays_v1"\n'
-            "notes:\n"
-            '  rule_of_day: "TBD"\n'
-            '  logline: "TBD"\n'
-        ),
-        encoding="utf-8",
-    )
-    (ep_dir / "shotlist.yaml").write_text("version: 1\nshots: []\n", encoding="utf-8")
-    (ep_dir / "dialogue.md").write_text(f"# {ep_id} Dialogue\n\n", encoding="utf-8")
-    console.print(f"[bold green]Created[/bold green] {ep_dir}")
+    validation_result = validate_episode(ep_dir / "episode.yaml", allow_missing_assets=True)
+    if validation_result.ok:
+        console.print("[bold green]Validation passed[/bold green]")
+    else:
+        console.print("[bold yellow]Validation warnings:[/bold yellow]")
+        for e in validation_result.errors:
+            console.print(f"  - {e}")
+
+
+@app.command("build")
+def build_final_cmd(
+    episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False),
+    force: bool = typer.Option(False, "--force", help="Force regenerate all assets"),
+    skip_validation: bool = typer.Option(False, "--skip-validation", help="Skip validation stage"),
+    dry_run: bool = typer.Option(False, "--dry-run", help="Show what would be done"),
+):
+    """Run the full build pipeline: validate → generate → timeline → render → assemble."""
+    if dry_run:
+        console.print("[bold cyan]Dry run mode[/bold cyan] - showing planned stages:")
+        result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation, dry_run=True)
+        for stage in result.stages_completed:
+            console.print(f"  → {stage}")
+        for w in result.warnings:
+            console.print(f"  [yellow]⚠ {w}[/yellow]")
+        raise typer.Exit(code=0)
+
+    console.print(f"[bold]Building[/bold] {episode_yaml}")
+    result = do_build_final(episode_yaml, force=force, skip_validation=skip_validation)
+
+    for sr in result.stage_results:
+        status = "[green]✓[/green]" if sr.success else "[red]✗[/red]"
+        console.print(f"  {status} {sr.name} ({sr.duration_sec:.2f}s): {sr.message}")
+
+    if result.warnings:
+        console.print("\n[bold yellow]Warnings:[/bold yellow]")
+        for w in result.warnings:
+            console.print(f"  - {w}")
+
+    if result.errors:
+        console.print("\n[bold red]Errors:[/bold red]")
+        for e in result.errors:
+            console.print(f"  - {e}")
+
+    if result.success:
+        console.print("\n[bold green]Build complete[/bold green]")
+        if result.output_path:
+            console.print(f"Output: {result.output_path}")
+        raise typer.Exit(code=0)
+    else:
+        console.print("\n[bold red]Build failed[/bold red]")
+        raise typer.Exit(code=1)
 
 
 @app.command("build-timeline")
@@ -121,6 +162,49 @@ def build_timeline_cmd(episode_yaml: Path = typer.Argument(..., exists=True, dir
 def build_animatic_cmd(episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False)):
     out = build_animatic_from_placeholders(episode_yaml)
     console.print(f"Wrote {out}")
+
+
+@app.command("gen")
+def gen_assets(
+    episode_yaml: Path = typer.Argument(..., exists=True, dir_okay=False),
+    force: bool = typer.Option(False, "--force", help="Regenerate all assets"),
+    changed_only: bool = typer.Option(False, "--changed", help="Only generate changed assets"),
+    provider: Optional[str] = typer.Option(None, "--provider", help="Override default provider"),
+):
+    """Generate assets for an episode using the configured provider."""
+    result = generate_episode_assets(
+        episode_yaml,
+        force=force,
+        changed_only=changed_only,
+        provider_override=provider,
+    )
+
+    table = Table(title="Asset Generation")
+    table.add_column("Generated", style="green")
+    table.add_column("Skipped", style="yellow")
+    table.add_column("Errors", style="red")
+    table.add_row(
+        str(len(result.generated)),
+        str(len(result.skipped)),
+        str(len(result.errors)),
+    )
+    console.print(table)
+
+    if result.generated:
+        console.print("\n[bold green]Generated:[/bold green]")
+        for asset_id in result.generated:
+            console.print(f"  - {asset_id}")
+
+    if result.skipped:
+        console.print("\n[bold yellow]Skipped (cache hit):[/bold yellow]")
+        for asset_id in result.skipped:
+            console.print(f"  - {asset_id}")
+
+    if result.errors:
+        console.print("\n[bold red]Errors:[/bold red]")
+        for asset_id, error in result.errors:
+            console.print(f"  - {asset_id}: {error}")
+        raise typer.Exit(code=1)
 
 
 canon_app = typer.Typer(add_completion=False, no_args_is_help=True)
