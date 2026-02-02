@@ -1,0 +1,17 @@
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+dist/
+build/
+*.egg-info/
+.DS_Store
+
+episodes/**/assets/**/*
+episodes/**/renders/**/*
+episodes/**/logs/**/*
+!episodes/**/assets/.keep
+!episodes/**/renders/.keep
+!episodes/**/logs/.keep

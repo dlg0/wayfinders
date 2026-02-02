@@ -1,0 +1,12 @@
+version: 1
+overlays:
+  - id: title_card
+    label: Title card
+  - id: rule_tag
+    label: Rule tag
+  - id: impact_text
+    label: Impact text
+  - id: fold_map
+    label: Fold map
+  - id: to_be_continued
+    label: End card

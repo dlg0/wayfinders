@@ -1,0 +1,40 @@
+version: 1
+shots:
+  - id: S01
+    dur_sec: 5
+    bg: bg_windglass_ridge_day
+    camera: { move: pan, x0: 0.0, x1: 0.08, y0: 0.0, y1: 0.0, z0: 1.0, z1: 1.02 }
+    actors: []
+    overlays: []
+    fx: []
+    audio: { dialogue: [], sfx: ["wind_soft"] }
+
+  - id: S02
+    dur_sec: 5
+    bg: bg_windglass_ridge_day
+    camera: { move: none }
+    actors:
+      - { character: spencer, pose: run_loop, expression: excited }
+    overlays: []
+    fx: []
+    audio: { dialogue: ["Spencer: Shortcut!"], sfx: ["footsteps_grass"] }
+
+  - id: S16
+    dur_sec: 10
+    bg: bg_tall_grass_mid
+    camera: { move: slowpush, z0: 1.0, z1: 1.05 }
+    actors:
+      - { character: fletcher, pose: kneel_point, expression: calm }
+    overlays: []
+    fx: [path_draw, glow]
+    audio: { dialogue: ["Fletcher: The Gentle Way."], sfx: ["ink_draw", "chime_soft"] }
+
+  - id: S59
+    dur_sec: 6
+    bg: bg_endcard_paper
+    camera: { move: none }
+    actors: []
+    overlays:
+      - { id: to_be_continued, text: "TO BE CONTINUED" }
+    fx: []
+    audio: { dialogue: [], sfx: ["theme_sting_short"] }

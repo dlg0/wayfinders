@@ -1,0 +1,6 @@
+# Example configuration for wf (future)
+# provider = "openai"
+#
+# [openai]
+# api_key_env = "OPENAI_API_KEY"
+# model = "gpt-image-1"

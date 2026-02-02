@@ -1,0 +1,19 @@
+version: 1
+stats:
+  - id: momentum
+    label: Momentum
+  - id: echo
+    label: Echo
+  - id: luck
+    label: Luck
+  - id: calm
+    label: Calm
+  - id: stickiness
+    label: Stickiness
+statuses:
+  - id: overheat
+    label: Overheat
+  - id: hush
+    label: Hush
+  - id: patch
+    label: Patch

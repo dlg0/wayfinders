@@ -1,0 +1,18 @@
+version: 1
+characters:
+  - id: charlie
+    label: Charlie
+    role: planner_builder
+    pose_pack: posepack_charlie_v1
+  - id: spencer
+    label: Spencer
+    role: sprinter_wildcard
+    pose_pack: posepack_spencer_v1
+  - id: fletcher
+    label: Fletcher
+    role: heart_pattern_finder
+    pose_pack: posepack_fletcher_v1
+  - id: fold
+    label: Fold
+    role: map_creature
+    pose_pack: posepack_fold_v1

@@ -1,0 +1,10 @@
+version: 1
+biomes:
+  - id: windglass_plains
+    label: Windglass Plains
+  - id: moss_clock_ruins
+    label: Moss-Clock Ruins
+  - id: saffron_dunes
+    label: Saffron Dunes
+  - id: inkwood
+    label: Inkwood

@@ -1,0 +1,8 @@
+version: 1
+fx:
+  - id: path_draw
+  - id: path_flicker
+  - id: paper_tear
+  - id: hush
+  - id: glow
+  - id: scribble_storm

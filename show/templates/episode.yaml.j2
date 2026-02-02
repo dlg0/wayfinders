@@ -1,0 +1,22 @@
+id: "{{ episode_id }}"
+title: "{{ title }}"
+runtime_target_sec: {{ runtime_target_sec }}
+biome: {{ biome }}
+cast:
+{% for c in cast %}
+  - {{ c }}
+{% endfor %}
+style_profile: "comic_low_fps_v1"
+render:
+  fps: 24
+  resolution: [1920, 1080]
+assets:
+  pose_packs:
+{% for p in pose_packs %}
+    - "{{ p }}"
+{% endfor %}
+  bg_pack: "{{ biome }}_v1"
+  overlay_pack: "overlays_v1"
+notes:
+  rule_of_day: "{{ rule_of_day }}"
+  logline: "{{ logline }}"
