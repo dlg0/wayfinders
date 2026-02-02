@@ -14,7 +14,9 @@ except Exception:
 
 def _require_pillow():
     if Image is None:
-        raise RuntimeError("Pillow required. Install: pip install -e '.[placeholders]'")
+        raise RuntimeError(
+            "Pillow required. Install: uv pip install -e '.[placeholders]'"
+        )
 
 
 def build_animatic_from_placeholders(episode_yaml: Path) -> Path:

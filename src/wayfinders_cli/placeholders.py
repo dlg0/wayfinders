@@ -21,7 +21,9 @@ class PlaceholderResult:
 
 def _require_pillow():
     if Image is None:
-        raise RuntimeError("Pillow is required. Install with: pip install -e '.[placeholders]'")
+        raise RuntimeError(
+            "Pillow is required. Install with: uv pip install -e '.[placeholders]'"
+        )
 
 
 def create_placeholders(episode_path: Path, force: bool = False) -> PlaceholderResult:

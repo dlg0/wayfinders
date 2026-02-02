@@ -12,16 +12,16 @@ See `README.md` for "Definition of Done" and `docs/ARCHITECTURE.md` for system d
 
 ```bash
 # Set up environment
-python -m venv .venv
+uv venv
 source .venv/bin/activate
-pip install -e ".[dev,placeholders]"
+uv pip install -e ".[dev,placeholders]"
 
 # Run the example episode through the pipeline
-wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
-wf placeholders episodes/s01e01_map_forgot_roads/episode.yaml
-wf plan episodes/s01e01_map_forgot_roads/episode.yaml
-wf build-timeline episodes/s01e01_map_forgot_roads/episode.yaml
-wf build-animatic episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
+uv run wf placeholders episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf plan episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf build-timeline episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf build-animatic episodes/s01e01_map_forgot_roads/episode.yaml
 ```
 
 Outputs go to `episodes/s01e01_map_forgot_roads/logs/`.
@@ -49,23 +49,23 @@ See `docs/CLI_SPEC.md` for command contracts and `docs/ARCHITECTURE.md` for buil
 
 1. **Validate schemas locally**
    ```bash
-   python -m pytest tests/
+   uv run pytest tests/
    ```
 
 2. **Test with the example episode**
    ```bash
-   wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
+   uv run wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
    ```
 
 3. **Check code quality**
    ```bash
-   ruff check src/ tests/
+   uv run ruff check src/ tests/
    ```
 
 ### Quality Gates (MANDATORY before push)
 
-- [ ] Tests pass: `pytest tests/`
-- [ ] Linter passes: `ruff check src/ tests/`
+- [ ] Tests pass: `uv run pytest tests/`
+- [ ] Linter passes: `uv run ruff check src/ tests/`
 - [ ] Example episode still validates/plans/builds
 - [ ] New tests added for new functionality
 - [ ] Code follows style guide (see `docs/style_guide.md` for visual rules, apply PEP 8 elsewhere)
@@ -88,9 +88,9 @@ bd sync               # Sync with git
 
 1. **Verify quality gates pass** (if code changed):
    ```bash
-   pytest tests/
-   ruff check src/ tests/
-   wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
+   uv run pytest tests/
+   uv run ruff check src/ tests/
+   uv run wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
    ```
 
 2. **File issues for remaining work** - Create issues for anything that needs follow-up

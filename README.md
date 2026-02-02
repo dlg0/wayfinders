@@ -12,36 +12,36 @@ Once the items in `docs/ROADMAP.md` are implemented, the tool supports:
 
 ## Quickstart
 ```bash
-python -m venv .venv
+uv venv
 source .venv/bin/activate
-pip install -e ".[dev,placeholders]"
+uv pip install -e ".[dev,placeholders]"
 ```
 
 Validate the example episode:
 ```bash
-wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
+uv run wf validate episodes/s01e01_map_forgot_roads/episode.yaml --allow-missing-assets
 ```
 
 Generate placeholder assets:
 ```bash
-wf placeholders episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf placeholders episodes/s01e01_map_forgot_roads/episode.yaml
 ```
 
 Create a build plan:
 ```bash
-wf plan episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf plan episodes/s01e01_map_forgot_roads/episode.yaml
 ```
 
 Build timeline + animatic stub:
 ```bash
-wf build-timeline episodes/s01e01_map_forgot_roads/episode.yaml
-wf build-animatic episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf build-timeline episodes/s01e01_map_forgot_roads/episode.yaml
+uv run wf build-animatic episodes/s01e01_map_forgot_roads/episode.yaml
 ```
 
 Export JSON schemas for editor tooling:
 ```bash
-wf canon export-jsonschema
-wf render export-jsonschema
+uv run wf canon export-jsonschema
+uv run wf render export-jsonschema
 ```
 
 ## Key docs
