@@ -2,6 +2,8 @@
 
 This is the developer contract for the Wayfinders CLI.
 
+All CLI commands should be run via `uv run wf ...` so the project environment is managed by uv.
+
 ## Commands (v1)
 
 ### `wf validate <episode.yaml>`
