@@ -1,0 +1,19 @@
+id: "{{ ep_id }}"
+title: "{{ title }}"
+runtime_target_sec: {{ runtime_target_sec }}
+biome: "{{ biome }}"
+cast: [{{ cast | join(', ') }}]
+style_profile: "{{ style_profile }}"
+render:
+  fps: 24
+  resolution: [1920, 1080]
+assets:
+  pose_packs:
+{%- for char in cast %}
+    - posepack_{{ char }}_v1
+{%- endfor %}
+  bg_pack: "{{ biome }}_v1"
+  overlay_pack: "overlays_v1"
+notes:
+  rule_of_day: "TBD"
+  logline: "TBD"

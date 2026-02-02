@@ -1,6 +1,18 @@
-# Example configuration for wf (future)
-# provider = "openai"
-#
-# [openai]
-# api_key_env = "OPENAI_API_KEY"
-# model = "gpt-image-1"
+# Wayfinders CLI configuration
+# Copy this file to wf.toml and customize as needed.
+
+# Default provider for image generation
+default_provider = "placeholder"
+
+# Provider configurations
+# Each provider section configures a specific generation backend.
+
+[providers.placeholder]
+# No configuration needed. Generates simple colored rectangles with labels.
+# Works without any API credentials - perfect for development and testing.
+
+[providers.openai]
+# OpenAI image generation (requires API key)
+# Uncomment and configure to use:
+# api_key_env = "OPENAI_API_KEY"  # Environment variable containing API key
+# model = "gpt-image-1"           # Model to use for generation
